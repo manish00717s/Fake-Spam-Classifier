@@ -19,26 +19,41 @@ try:
 except LookupError:
     nltk.download('stopwords')
 
+# Build these once at import time instead of rebuilding on every call.
+_STOP_WORDS = set(stopwords.words('english'))
+_STEMMER = PorterStemmer()
+
 
 def preprocess_text(text):
     """
-    5-step NLP preprocessing pipeline
+    5-step NLP preprocessing pipeline.
+
+    Steps: lowercase -> tokenize -> keep alphanumeric ->
+    remove stopwords -> stem.
+
+    Args:
+        text: The raw message text. Non-string / empty input returns "".
+
+    Returns:
+        A cleaned, space-joined string of processed tokens.
     """
+    # Guard against None, NaN floats, or other non-string input.
+    if not isinstance(text, str) or not text.strip():
+        return ""
+
     # 1. Lowercasing
     text = text.lower()
-    
+
     # 2. Tokenization
     tokens = word_tokenize(text)
-    
+
     # 3. Special Character Removal
     tokens = [token for token in tokens if token.isalnum()]
-    
+
     # 4. Stopword & Punctuation Removal
-    stop_words = set(stopwords.words('english'))
-    tokens = [token for token in tokens if token not in stop_words]
-    
+    tokens = [token for token in tokens if token not in _STOP_WORDS]
+
     # 5. Stemming
-    stemmer = PorterStemmer()
-    tokens = [stemmer.stem(token) for token in tokens]
-    
+    tokens = [_STEMMER.stem(token) for token in tokens]
+
     return ' '.join(tokens)
